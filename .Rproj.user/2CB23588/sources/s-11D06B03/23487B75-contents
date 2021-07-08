@@ -132,9 +132,15 @@ Data jobs will be defined as such:
 
 ```{r}
 data_job_definitions <- c("data", "analyt", "information", "intelligence", "statistic")
+```
 
+Then we can append this definition to the dataframe:
+
+```{r}
 advertiments_defined <- advertiments_formatted %>% 
-  mutate(`Defined as a data job` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), paste(data_job_definitions, collapse = "|")), 
+  mutate(`Defined as a data job` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                                     paste(data_job_definitions, collapse = "|")
+                                                     ), 
          "Data", "Not data"))
 ```
 
@@ -145,13 +151,24 @@ advertiments_defined <- advertiments_formatted %>%
 
 
 ```{r, fig.align="center"}
-advertiments_defined %>%
+count_plot <- advertiments_defined %>%
+  group_by(`Defined as a data job`, Year) %>%
+  count(name = "Number of advertisments") %>%
+  ggplot(aes(x = Year, y = `Number of advertisments`, colour = `Defined as a data job`, group = `Defined as a data job`)) + 
+  geom_line() + 
+  scale_y_log10() + 
+  labs(title = "Count of jobs on iworkforsa that  each year by definition")
+
+percent_plot <- advertiments_defined %>%
   group_by(`Defined as a data job`, Year) %>%
   count() %>%
   group_by(Year) %>%
   mutate(`Percentage within each year`= n/sum(n)) %>%
   ggplot(aes(x = Year, y = `Percentage within each year`, colour = `Defined as a data job`, group = `Defined as a data job`)) + 
   geom_line() + 
-  scale_y_log10()
+  scale_y_log10() + 
+  labs(title = "Percentage of jobs on iworkforsa each year by definition")
+
+count_plot/percent_plot
 ```
 
