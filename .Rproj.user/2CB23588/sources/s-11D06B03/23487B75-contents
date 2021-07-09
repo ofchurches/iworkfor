@@ -126,7 +126,7 @@ We can do this by including words and word-parts that signify the sort of job we
 
 ### Definition
 
-Regardless, we can set the definition and accept these caveats. Importantly, because the new variable `Defined as a data job` is based on `Position ID Job Title`, there will be no missing values in this new variable.
+Regardless, we can set the definition and accept these caveats. Importantly, because the new variable `Defined as a data job` is based on `Position ID Job Title`, there will be no missing values in this new variable. Its worth noting that this step can (and should) be changed as we think more or less terms are applicable.
 
 Data jobs will be defined as such:
 
@@ -151,24 +151,73 @@ advertiments_defined <- advertiments_formatted %>%
 
 
 ```{r, fig.align="center"}
-count_plot <- advertiments_defined %>%
+increasing_data <- advertiments_defined %>%
   group_by(`Defined as a data job`, Year) %>%
   count(name = "Number of advertisments") %>%
+  group_by(Year) %>%
+  mutate(`Proportion within each year`= `Number of advertisments`/sum(`Number of advertisments`))
+
+count_plot <- increasing_data %>%
   ggplot(aes(x = Year, y = `Number of advertisments`, colour = `Defined as a data job`, group = `Defined as a data job`)) + 
   geom_line() + 
   scale_y_log10() + 
   labs(title = "Count of jobs on iworkforsa that  each year by definition")
 
-percent_plot <- advertiments_defined %>%
-  group_by(`Defined as a data job`, Year) %>%
-  count() %>%
-  group_by(Year) %>%
-  mutate(`Percentage within each year`= n/sum(n)) %>%
-  ggplot(aes(x = Year, y = `Percentage within each year`, colour = `Defined as a data job`, group = `Defined as a data job`)) + 
+prop_plot <- increasing_data %>%
+  ggplot(aes(x = Year, y = `Proportion within each year`, colour = `Defined as a data job`, group = `Defined as a data job`)) + 
   geom_line() + 
   scale_y_log10() + 
-  labs(title = "Percentage of jobs on iworkforsa each year by definition")
+  labs(title = "Proportion of jobs on iworkforsa each year by definition")
 
-count_plot/percent_plot
+count_plot/prop_plot
+
+increasing_data %>%
+  kable() %>%
+  kable_styling()
 ```
 
+This certainly doesn't make it look as though there has been an *explosion* in the proportion of "data" jobs advertised over the last four years. There were `r increasing_data[[4, 3]] - increasing_data[[2,3]]` more "data" jobs in 2020 than in 2018. While this is a `r (increasing_data[[2,3]]/increasing_data[[4, 3]])*100` percent increase in the number of these jobs that were advertised, it is worth noting that this is only an increase from a percent of `r increasing_data[[2,4]] * 100` in 2018 to  `r increasing_data[[4, 4]] * 100` in 2020 of the overall number of jobs that were advertised. That is an increase in just `r (increasing_data[[4, 4]] - increasing_data[[2,4]]) * 100` percent.
+
+### What departments are recruiting them?
+
+```{r, fig.align="center"}
+departments_data <- advertiments_defined %>%
+  group_by(Division, `Defined as a data job`) %>%
+  count(name = "Number of advertisments in division") %>%
+  ungroup() %>%
+  group_by(Division) %>%
+  mutate("Division total" = sum(`Number of advertisments in division`)) %>%
+  ungroup() %>%
+  mutate("Percent" = (`Number of advertisments in division`/`Division total`)*100)
+
+count_plot <- departments_data  %>%
+  slice_max(order_by = `Division total`, n = 12) %>%
+  ggplot(aes(x = reorder(Division, `Number of advertisments in division`), 
+             y = `Number of advertisments in division`, 
+             fill = `Defined as a data job`)) + 
+  geom_col(position = "dodge") + 
+  scale_y_log10() +
+  labs(title = "Count of jobs on iworkforsa that  each division by definition", 
+       x = "") + 
+  coord_flip()
+
+prop_plot <- departments_data  %>%
+  slice_max(order_by = `Division total`, n = 12) %>%
+  ggplot(aes(x = reorder(Division, `Number of advertisments in division`), 
+             y = `Number of advertisments in division`, 
+             fill = `Defined as a data job`)) + 
+  geom_col(position = "fill") + 
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Count of jobs on iworkforsa that  each division by definition", 
+       y = "Percent of advertisments in each division", 
+       x = "") + 
+  coord_flip()
+
+count_plot / prop_plot
+
+departments_data %>%
+  kable() %>%
+  kable_styling()
+```
+
+So, the Department of Health and Wellbeing has the greatest number of "data" job advertisments. But, it also has the smallest proportion of data jobs.

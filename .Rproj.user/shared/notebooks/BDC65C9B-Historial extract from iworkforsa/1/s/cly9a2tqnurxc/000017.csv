@@ -1,0 +1,3 @@
+"0","increasing_data %>%"
+"0","  kable() %>%"
+"0","  kable_styling()"
