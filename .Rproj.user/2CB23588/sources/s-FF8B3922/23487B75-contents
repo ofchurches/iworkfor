@@ -1,14 +1,12 @@
 ---
-title: "Historial extract from iworkforsa - lab book"
+title: "Historical extract from iworkforsa - lab book"
 author: "ofchurches"
 date: "28 June 2021"
-output:
-  github_document
-always_allow_html: yes
+output: html_document
 ---
 
 # Background
-This markdown is a preliminary investigation of the data provided by the [Office of the Commissioner for Public Sector Employment](https://www.publicsector.sa.gov.au/).The data contains details from every advertisment on [iworkforsa.gov.au](https://iworkfor.sa.gov.au/).
+This markdown is a preliminary investigation of the data provided by the [Office of the Commissioner for Public Sector Employment](https://www.publicsector.sa.gov.au/).The data contains details from every advertisement on [iworkforsa.gov.au](https://iworkfor.sa.gov.au/).
 
 Note that these data have been classified as "Public" by the OCPSE.
 
@@ -23,6 +21,7 @@ library(kableExtra)
 library(naniar)
 library(patchwork)
 library(skimr)
+library(DT)
 ```
 
 ## Import, arrange and format
@@ -46,7 +45,7 @@ advertiments <- path %>%
 
 ### Check the top and bottom of the data
 
-Data read in from `xlsx` files often has bits of extra information above *and* below the actual "data". To check that we haven't accidentaly imported that we can have a look at the top and bottom of our dataset.
+Data read in from `xlsx` files often has bits of extra information above *and* below the actual "data". To check that we haven't accidentally imported that we can have a look at the top and bottom of our data set.
 
 ```{r}
 advertiments %>%
@@ -104,7 +103,7 @@ It seems that all the variables except `I Workfor SA Part Time Hours` have minim
 gg_miss_upset(advertiments_formatted)
 ```
 
-Its reasuring that `I Workfor SA Min Salary` and `I Workfor SA MAX Salary` are only missing in combination with each other (and sometimes with `I Workfor SA Part Time Hours` as well).
+Its reassuring that `I Workfor SA Min Salary` and `I Workfor SA MAX Salary` are only missing in combination with each other (and sometimes with `I Workfor SA Part Time Hours` as well).
 
 The only note that appears particularly pertinent from these analyses is that `I Workfor SA Part Time Hours` should be treated with caution. We should note that the variables: `Division`, `Position Status`, `Position ID`, `Position ID Job Title`, `I Workfor SA Part Time` and `Year` are all completed with no missing values.
 
@@ -112,9 +111,9 @@ The only note that appears particularly pertinent from these analyses is that `I
 
 ## "Data" jobs
 
-The motivation for getting these data that Owen and Tim talked about was to look at advertisments for "data" jobs to investigate questions such as:
+The motivation for getting these data that Owen and Tim talked about was to look at advertisements for "data" jobs to investigate questions such as:
 
-* Are they increasing as a proportion of the advertisments?
+* Are they increasing as a proportion of the advertisements?
 * What departments are recruiting them?
 * What sort of work are they being anticipated to do?
 
@@ -134,7 +133,7 @@ Data jobs will be defined as such:
 data_job_definitions <- c("data", "analyt", "information", "intelligence", "statistic")
 ```
 
-Then we can append this definition to the dataframe:
+Then we can append this definition to the data frame:
 
 ```{r}
 advertiments_defined <- advertiments_formatted %>% 
@@ -215,9 +214,7 @@ prop_plot <- departments_data  %>%
 
 count_plot / prop_plot
 
-departments_data %>%
-  kable() %>%
-  kable_styling()
+datatable(departments_data)
 ```
 
-So, the Department of Health and Wellbeing has the greatest number of "data" job advertisments. But, it also has the smallest proportion of data jobs.
+So, the Department of Health and Wellbeing has the greatest number of "data" job advertisements. But, it also has the smallest proportion of data jobs.

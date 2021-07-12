@@ -2,9 +2,7 @@
 title: "Historial extract from iworkforsa - lab book"
 author: "ofchurches"
 date: "28 June 2021"
-output:
-  github_document
-always_allow_html: yes
+output: html_document
 ---
 
 # Background
@@ -23,6 +21,7 @@ library(kableExtra)
 library(naniar)
 library(patchwork)
 library(skimr)
+library(DT)
 ```
 
 ## Import, arrange and format
@@ -215,9 +214,7 @@ prop_plot <- departments_data  %>%
 
 count_plot / prop_plot
 
-departments_data %>%
-  kable() %>%
-  kable_styling()
+datatable(departments_data)
 ```
 
 So, the Department of Health and Wellbeing has the greatest number of "data" job advertisments. But, it also has the smallest proportion of data jobs.
