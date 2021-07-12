@@ -1,12 +1,12 @@
 ---
-title: "Historial extract from iworkforsa - lab book"
+title: "Historical extract from iworkforsa - lab book"
 author: "ofchurches"
 date: "28 June 2021"
-output: html_document
+output:   html_document
 ---
 
 # Background
-This markdown is a preliminary investigation of the data provided by the [Office of the Commissioner for Public Sector Employment](https://www.publicsector.sa.gov.au/).The data contains details from every advertisment on [iworkforsa.gov.au](https://iworkfor.sa.gov.au/).
+This markdown is a preliminary investigation of the data provided by the [Office of the Commissioner for Public Sector Employment](https://www.publicsector.sa.gov.au/).The data contains details from every advertisement on [iworkforsa.gov.au](https://iworkfor.sa.gov.au/).
 
 Note that these data have been classified as "Public" by the OCPSE.
 
@@ -45,7 +45,7 @@ advertiments <- path %>%
 
 ### Check the top and bottom of the data
 
-Data read in from `xlsx` files often has bits of extra information above *and* below the actual "data". To check that we haven't accidentaly imported that we can have a look at the top and bottom of our dataset.
+Data read in from `xlsx` files often has bits of extra information above *and* below the actual "data". To check that we haven't accidentally imported that we can have a look at the top and bottom of our data set.
 
 ```{r}
 advertiments %>%
@@ -103,7 +103,7 @@ It seems that all the variables except `I Workfor SA Part Time Hours` have minim
 gg_miss_upset(advertiments_formatted)
 ```
 
-Its reasuring that `I Workfor SA Min Salary` and `I Workfor SA MAX Salary` are only missing in combination with each other (and sometimes with `I Workfor SA Part Time Hours` as well).
+Its reassuring that `I Workfor SA Min Salary` and `I Workfor SA MAX Salary` are only missing in combination with each other (and sometimes with `I Workfor SA Part Time Hours` as well).
 
 The only note that appears particularly pertinent from these analyses is that `I Workfor SA Part Time Hours` should be treated with caution. We should note that the variables: `Division`, `Position Status`, `Position ID`, `Position ID Job Title`, `I Workfor SA Part Time` and `Year` are all completed with no missing values.
 
@@ -111,9 +111,9 @@ The only note that appears particularly pertinent from these analyses is that `I
 
 ## "Data" jobs
 
-The motivation for getting these data that Owen and Tim talked about was to look at advertisments for "data" jobs to investigate questions such as:
+The motivation for getting these data that Owen and Tim talked about was to look at advertisements for "data" jobs to investigate questions such as:
 
-* Are they increasing as a proportion of the advertisments?
+* Are they increasing as a proportion of the advertisements?
 * What departments are recruiting them?
 * What sort of work are they being anticipated to do?
 
@@ -133,7 +133,7 @@ Data jobs will be defined as such:
 data_job_definitions <- c("data", "analyt", "information", "intelligence", "statistic")
 ```
 
-Then we can append this definition to the dataframe:
+Then we can append this definition to the data frame:
 
 ```{r}
 advertiments_defined <- advertiments_formatted %>% 
@@ -189,32 +189,47 @@ departments_data <- advertiments_defined %>%
   ungroup() %>%
   mutate("Percent" = (`Number of advertisments in division`/`Division total`)*100)
 
-count_plot <- departments_data  %>%
-  slice_max(order_by = `Division total`, n = 12) %>%
-  ggplot(aes(x = reorder(Division, `Number of advertisments in division`), 
-             y = `Number of advertisments in division`, 
+most_data_departments <- departments_data %>%
+  filter(`Defined as a data job` == "Data") %>%
+  slice_max(order_by = Percent, n = 12) %>%
+  pull(Division)
+
+departments_data  %>%
+  filter(Division %in% most_data_departments) %>%
+  mutate(Division = factor(Division, levels = most_data_departments, ordered = TRUE)) %>%
+  ggplot(aes(x = Division, 
+             y = Percent, 
              fill = `Defined as a data job`)) + 
   geom_col(position = "dodge") + 
-  scale_y_log10() +
-  labs(title = "Count of jobs on iworkforsa that  each division by definition", 
+  labs(title = "Divisions with the greatest proportion of 'data' job advertiments", 
        x = "") + 
+  scale_x_discrete(limits=rev) +
   coord_flip()
 
-prop_plot <- departments_data  %>%
-  slice_max(order_by = `Division total`, n = 12) %>%
-  ggplot(aes(x = reorder(Division, `Number of advertisments in division`), 
-             y = `Number of advertisments in division`, 
-             fill = `Defined as a data job`)) + 
-  geom_col(position = "fill") + 
-  scale_y_continuous(labels = scales::percent) +
-  labs(title = "Count of jobs on iworkforsa that  each division by definition", 
-       y = "Percent of advertisments in each division", 
-       x = "") + 
-  coord_flip()
+```
 
-count_plot / prop_plot
+A more comprehensive investigation of these data can be made in the table below:
 
+```{r}
 datatable(departments_data)
 ```
 
-So, the Department of Health and Wellbeing has the greatest number of "data" job advertisments. But, it also has the smallest proportion of data jobs.
+```{r, echo=FALSE}
+dhw_count <- departments_data %>% 
+  filter(Division == "Department for Health and Wellbeing") %>% 
+  filter(`Defined as a data job` == "Data") %>% pull(`Number of advertisments in division`)
+
+dhw_percent <- departments_data %>% 
+  filter(Division == "Department for Health and Wellbeing") %>% 
+  filter(`Defined as a data job` == "Data") %>% 
+  pull(Percent)
+```
+
+
+So, the Department of Health and Wellbeing has the greatest number of "data" job advertisements: `r dhw_count`. But, it also has the fourth smallest proportion of data job advertisments: `r dhw_percent`%.
+
+It is worth noting that there are mustiple explanations for the differences in the number of advertiments of "data" jobs between the Divisions.
+* Divisions that "data" people like working in may keep their staff for longer and so advertise less
+* Some divisions may have recruited more "data" people in an earlier time period
+* Some divisions may not be hiring as many "data" people as they think they are
+
