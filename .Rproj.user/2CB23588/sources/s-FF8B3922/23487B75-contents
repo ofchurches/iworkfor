@@ -2,9 +2,7 @@
 title: "Historical extract from iworkforsa - lab book"
 author: "ofchurches"
 date: "28 June 2021"
-output:
-  github_document
-always_allow_html: yes
+output: html_document
 ---
 
 # Background
@@ -25,6 +23,8 @@ library(patchwork)
 library(skimr)
 library(DT)
 library(ComplexUpset)
+library(tidytext)
+library(tidyr)
 ```
 
 ## Import, arrange and format
@@ -274,3 +274,53 @@ It is worth noting that there are mustiple explanations for the differences in t
 * Some divisions may not be hiring as many "data" people as they think they are
 
 ### What sort of work are they being anticipated to do?
+
+Using the `Position ID Job Title`, we can see what other words appear alongside those used to define `Defined as a data job`.
+
+Lets start by looking at the words most frequently occuring in those jobs that we classified as `Defined as a data job == "Data"`.
+
+```{r}
+advertiments_unnest <- advertiments_defined %>%
+  select(`Defined as a data job`, `Position ID Job Title`) %>%
+  unnest_tokens(Word, `Position ID Job Title`)
+
+
+advertiments_unnest %>%
+  filter(`Defined as a data job` == "Data") %>%
+  count(Word, name = "Number of occurances") %>%
+  slice_max(order_by = `Number of occurances`, n = 12) %>%
+  ggplot(aes(x = reorder(Word, `Number of occurances`), y = `Number of occurances`, fill = Word)) +
+  geom_col() + 
+  coord_flip()  + 
+  theme(legend.position = "none") + 
+  labs(x = "", title = "Most used words used in 'data' job advertisments")
+  
+```
+
+It would be more instructive to see the words that most *differentiate* between "Data" and "Not data" jobs:
+
+```{r}
+advertiments_log <- advertiments_unnest %>%
+  count(`Defined as a data job`, Word) %>%
+  pivot_wider(names_from = `Defined as a data job`, values_from = n, values_fill = 0) %>% 
+  mutate(log_ratio = log2(Data / `Not data`)) %>%
+  filter(log_ratio != Inf) %>%
+  filter(log_ratio != -Inf)
+
+neg_log <- advertiments_log %>%
+  slice_max(order_by = log_ratio, n = 10)
+
+pos_log <- advertiments_log %>%
+  slice_min(order_by = log_ratio, n = 10)
+
+neg_log %>%
+  bind_rows(pos_log) %>%
+  mutate(pos = log_ratio >= 0) %>%
+  ggplot(aes(x = reorder(Word, log_ratio), y = log_ratio, fill = log_ratio > 0)) + 
+  geom_col() + 
+  coord_flip()  + 
+  theme(legend.position = "none") + 
+  labs(x = "", y = "Log ratio (positive is more 'Data')", 
+       title = "Words that most discriminate between 'Data' and 'Not data' jobs")
+```
+
