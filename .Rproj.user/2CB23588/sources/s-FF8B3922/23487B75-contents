@@ -2,7 +2,9 @@
 title: "Historical extract from iworkforsa - lab book"
 author: "ofchurches"
 date: "28 June 2021"
-output:   html_document
+output:
+  github_document
+always_allow_html: yes
 ---
 
 # Background

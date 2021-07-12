@@ -21,6 +21,7 @@ library(naniar)
 library(patchwork)
 library(skimr)
 library(DT)
+library(ComplexUpset)
 ```
 
 ## Import, arrange and format
@@ -45,407 +46,15 @@ advertiments <- path %>%
 Data read in from `xlsx` files often has bits of extra information above *and* below the actual "data". To check that we haven't accidentally imported that we can have a look at the top and bottom of our data set.
 
 ``` r
-advertiments %>%
-  slice_head(n = 3) %>%
-  kable() %>%
-  kable_styling()
+datatable(advertiments)
 ```
 
-<table class="table" style="margin-left: auto; margin-right: auto;">
-<thead>
-<tr>
-<th style="text-align:left;">
-Date Publish To Public Drill
-</th>
-<th style="text-align:left;">
-Division
-</th>
-<th style="text-align:left;">
-Position Status
-</th>
-<th style="text-align:left;">
-I Workfor SA Classification Level
-</th>
-<th style="text-align:left;">
-Position ID
-</th>
-<th style="text-align:left;">
-Position ID Job Title
-</th>
-<th style="text-align:left;">
-I Workfor SA Vacancy Type
-</th>
-<th style="text-align:left;">
-I Workfor SA Part Time
-</th>
-<th style="text-align:left;">
-I Workfor SA Part Time Hours
-</th>
-<th style="text-align:left;">
-I Workfor SA Location
-</th>
-<th style="text-align:left;">
-I Workfor SA Min Salary
-</th>
-<th style="text-align:left;">
-I Workfor SA Max Salary
-</th>
-<th style="text-align:left;">
-I Workfor SA Employment Status
-</th>
-<th style="text-align:left;">
-I Workfor SA Job Category
-</th>
-<th style="text-align:left;">
-Year
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-2017-11-04
-</td>
-<td style="text-align:left;">
-Department for Child Protection
-</td>
-<td style="text-align:left;">
-Position Closed
-</td>
-<td style="text-align:left;">
-AHP3 - Allied Health Professional
-</td>
-<td style="text-align:left;">
-294895
-</td>
-<td style="text-align:left;">
-294895 - Supervisor
-</td>
-<td style="text-align:left;">
-Open to Everyone
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-5540 - PORT PIRIE
-</td>
-<td style="text-align:left;">
-92757
-</td>
-<td style="text-align:left;">
-98896
-</td>
-<td style="text-align:left;">
-Ongoing
-</td>
-<td style="text-align:left;">
-Community and Social Services, Child, Aged and Disability Care
-</td>
-<td style="text-align:left;">
-2017
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-2017-11-04
-</td>
-<td style="text-align:left;">
-Department for Child Protection
-</td>
-<td style="text-align:left;">
-Position Closed
-</td>
-<td style="text-align:left;">
-PO3 - Professional Officer
-</td>
-<td style="text-align:left;">
-294897
-</td>
-<td style="text-align:left;">
-294897 - Supervisor
-</td>
-<td style="text-align:left;">
-Open to Everyone
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-5540 - PORT PIRIE
-</td>
-<td style="text-align:left;">
-90029
-</td>
-<td style="text-align:left;">
-95487
-</td>
-<td style="text-align:left;">
-Ongoing
-</td>
-<td style="text-align:left;">
-Community and Social Services, Child, Aged and Disability Care
-</td>
-<td style="text-align:left;">
-2017
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-2017-11-04
-</td>
-<td style="text-align:left;">
-Department for Education
-</td>
-<td style="text-align:left;">
-Position Closed
-</td>
-<td style="text-align:left;">
-AHP3 - Allied Health Professional
-</td>
-<td style="text-align:left;">
-294898
-</td>
-<td style="text-align:left;">
-294898 - Psychologist, Centre for Hearing Impaired
-</td>
-<td style="text-align:left;">
-Open to Everyone
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-45
-</td>
-<td style="text-align:left;">
-5000 - ADELAIDE
-</td>
-<td style="text-align:left;">
-92757
-</td>
-<td style="text-align:left;">
-98896
-</td>
-<td style="text-align:left;">
-Ongoing
-</td>
-<td style="text-align:left;">
-Community and Social Services, Child, Aged and Disability Care
-</td>
-<td style="text-align:left;">
-2017
-</td>
-</tr>
-</tbody>
-</table>
-``` r
-advertiments %>%
-  slice_tail(n = 3) %>%
-  kable() %>%
-  kable_styling()
-```
+    ## Warning in instance$preRenderHook(instance): It seems your data is too big
+    ## for client-side DataTables. You may consider server-side processing: https://
+    ## rstudio.github.io/DT/server.html
 
-<table class="table" style="margin-left: auto; margin-right: auto;">
-<thead>
-<tr>
-<th style="text-align:left;">
-Date Publish To Public Drill
-</th>
-<th style="text-align:left;">
-Division
-</th>
-<th style="text-align:left;">
-Position Status
-</th>
-<th style="text-align:left;">
-I Workfor SA Classification Level
-</th>
-<th style="text-align:left;">
-Position ID
-</th>
-<th style="text-align:left;">
-Position ID Job Title
-</th>
-<th style="text-align:left;">
-I Workfor SA Vacancy Type
-</th>
-<th style="text-align:left;">
-I Workfor SA Part Time
-</th>
-<th style="text-align:left;">
-I Workfor SA Part Time Hours
-</th>
-<th style="text-align:left;">
-I Workfor SA Location
-</th>
-<th style="text-align:left;">
-I Workfor SA Min Salary
-</th>
-<th style="text-align:left;">
-I Workfor SA Max Salary
-</th>
-<th style="text-align:left;">
-I Workfor SA Employment Status
-</th>
-<th style="text-align:left;">
-I Workfor SA Job Category
-</th>
-<th style="text-align:left;">
-Year
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-Green Industries SA
-</td>
-<td style="text-align:left;">
-Created
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-439435
-</td>
-<td style="text-align:left;">
-439435 - Default template
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-5000 - ADELAIDE
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-2021
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-2021
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Report created on: 9/06/2021 3:42:28 PM
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-2021
-</td>
-</tr>
-</tbody>
-</table>
+![](Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-3-1.png)
+
 It looks like we've imported some extra rows that we don't want because they were footer details and some `NA` whole rows. We can remove them.
 
 ``` r
@@ -1127,10 +736,12 @@ We can do this by including words and word-parts that signify the sort of job we
 
 Regardless, we can set the definition and accept these caveats. Importantly, because the new variable `Defined as a data job` is based on `Position ID Job Title`, there will be no missing values in this new variable. Its worth noting that this step can (and should) be changed as we think more or less terms are applicable.
 
+Its worth noting that there is a variable called `I Workfor SA Job Category` that is fairly complete. Because its not actually complete, its not suitable for basing our definition on. But its useful for a source of inspiration!
+
 Data jobs will be defined as such:
 
 ``` r
-data_job_definitions <- c("data", "analyt", "information", "intelligence", "statistic")
+data_job_definitions <- c("data", "analy", "information", "intelligence", "statistic", "scient", "research")
 ```
 
 Then we can append this definition to the data frame:
@@ -1142,6 +753,52 @@ advertiments_defined <- advertiments_formatted %>%
                                                      ), 
          "Data", "Not data"))
 ```
+
+As a check on our definitions, we should see how often each occur.
+
+``` r
+data_job_type <- advertiments_defined %>%
+  select(`Position ID Job Title`) %>%
+  mutate(`Is "data"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[1]), 1, 0)) %>%
+  mutate(`Is "analy"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[2]), 1, 0)) %>%
+  mutate(`Is "information"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[3]), 1, 0)) %>%
+  mutate(`Is "intelligence"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[4]), 1, 0)) %>%
+  mutate(`Is "statistic"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[5]), 1, 0)) %>%
+  mutate(`Is "scient"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`),
+                                         data_job_definitions[6]), 1, 0)) %>%
+  mutate(`Is "research"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`),
+                                         data_job_definitions[7]), 1, 0))
+
+data_job_type %>%
+  select(-`Position ID Job Title`) %>%
+  pivot_longer(cols = everything(), names_to = "Data job type", values_to = "Count") %>%
+  group_by(`Data job type`) %>%
+  summarise(Count = sum(Count)) %>%
+  ggplot(aes(x = reorder(`Data job type`, -Count), y = Count, fill = `Data job type`)) + 
+  geom_col() + 
+  theme(legend.position = "none") + 
+  labs(x = "Data job type", title = "Counts of data job types")
+```
+
+![](Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-11-1.png)
+
+This seems pretty sensible. Lets also check how they join together within a singe `Position ID Job Title`.
+
+``` r
+data_job_type %>%
+  select(-`Position ID Job Title`) %>%
+  filter_all(any_vars(. == 1)) %>%
+  upset(colnames(data_job_type[2:8]))
+```
+
+![](Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-12-1.png)
+
+So there were 5 "data scientists". Seems pretty sensible.
 
 ## Answers
 
@@ -1169,10 +826,11 @@ prop_plot <- increasing_data %>%
 count_plot/prop_plot
 ```
 
-<img src="Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-11-1.png" style="display: block; margin: auto;" />
+<img src="Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-13-1.png" style="display: block; margin: auto;" />
 
 ``` r
 increasing_data %>%
+  filter(`Defined as a data job` == "Data") %>%
   kable() %>%
   kable_styling()
 ```
@@ -1203,10 +861,10 @@ Data
 2017
 </td>
 <td style="text-align:right;">
-26
+75
 </td>
 <td style="text-align:right;">
-0.0129289
+0.0372949
 </td>
 </tr>
 <tr>
@@ -1217,10 +875,10 @@ Data
 2018
 </td>
 <td style="text-align:right;">
-166
+458
 </td>
 <td style="text-align:right;">
-0.0181758
+0.0501478
 </td>
 </tr>
 <tr>
@@ -1231,10 +889,10 @@ Data
 2019
 </td>
 <td style="text-align:right;">
-188
+500
 </td>
 <td style="text-align:right;">
-0.0209588
+0.0557414
 </td>
 </tr>
 <tr>
@@ -1245,10 +903,10 @@ Data
 2020
 </td>
 <td style="text-align:right;">
-218
+519
 </td>
 <td style="text-align:right;">
-0.0212911
+0.0506885
 </td>
 </tr>
 <tr>
@@ -1259,85 +917,15 @@ Data
 2021
 </td>
 <td style="text-align:right;">
-108
+286
 </td>
 <td style="text-align:right;">
-0.0208534
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Not data
-</td>
-<td style="text-align:left;">
-2017
-</td>
-<td style="text-align:right;">
-1985
-</td>
-<td style="text-align:right;">
-0.9870711
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Not data
-</td>
-<td style="text-align:left;">
-2018
-</td>
-<td style="text-align:right;">
-8967
-</td>
-<td style="text-align:right;">
-0.9818242
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Not data
-</td>
-<td style="text-align:left;">
-2019
-</td>
-<td style="text-align:right;">
-8782
-</td>
-<td style="text-align:right;">
-0.9790412
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Not data
-</td>
-<td style="text-align:left;">
-2020
-</td>
-<td style="text-align:right;">
-10021
-</td>
-<td style="text-align:right;">
-0.9787089
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Not data
-</td>
-<td style="text-align:left;">
-2021
-</td>
-<td style="text-align:right;">
-5071
-</td>
-<td style="text-align:right;">
-0.9791466
+0.0552230
 </td>
 </tr>
 </tbody>
 </table>
-This certainly doesn't make it look as though there has been an *explosion* in the proportion of "data" jobs advertised over the last four years. There were 52 more "data" jobs in 2020 than in 2018. While this is a 76.146789 percent increase in the number of these jobs that were advertised, it is worth noting that this is only an increase from a percent of 1.8175846 in 2018 to 2.1291142 in 2020 of the overall number of jobs that were advertised. That is an increase in just 0.3115296 percent.
+This certainly doesn't make it look as though there has been an *explosion* in the proportion of "data" jobs advertised over the last four years. There were 61 more "data" jobs in 2020 than in 2018. While this is a 88.2466281 percent increase in the number of these jobs that were advertised, it is worth noting that this is only an increase from a percent of 5.0147816 in 2018 to 5.0688544 in 2020 of the overall number of jobs that were advertised. That is an increase in just 0.0540728 percent.
 
 ### What departments are recruiting them?
 
@@ -1369,7 +957,7 @@ departments_data  %>%
   coord_flip()
 ```
 
-<img src="Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-12-1.png" style="display: block; margin: auto;" />
+<img src="Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-14-1.png" style="display: block; margin: auto;" />
 
 A more comprehensive investigation of these data can be made in the table below:
 
@@ -1377,8 +965,10 @@ A more comprehensive investigation of these data can be made in the table below:
 datatable(departments_data)
 ```
 
-![](Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](Historial-extract-from-iworkforsa_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
-So, the Department of Health and Wellbeing has the greatest number of "data" job advertisements: 274. But, it also has the fourth smallest proportion of data job advertisments: 1.2351244%.
+So, the Department of Health and Wellbeing has the greatest number of "data" job advertisements: 905. But, it also has one of the smallest proportions of data job advertisments: 4.0795168%.
 
 It is worth noting that there are mustiple explanations for the differences in the number of advertiments of "data" jobs between the Divisions. \* Divisions that "data" people like working in may keep their staff for longer and so advertise less \* Some divisions may have recruited more "data" people in an earlier time period \* Some divisions may not be hiring as many "data" people as they think they are
+
+### What sort of work are they being anticipated to do?
