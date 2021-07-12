@@ -5,16 +5,16 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "3524265418",
+    "hash" : "0",
     "id" : "23487B75",
-    "lastKnownWriteTime" : 1626061296,
-    "last_content_update" : 1626061296232,
+    "lastKnownWriteTime" : 1626072943,
+    "last_content_update" : 1626072943664,
     "path" : "~/GitHub/iworkfor/Historial extract from iworkforsa.Rmd",
     "project_path" : "Historial extract from iworkforsa.Rmd",
     "properties" : {
-        "cursorPosition" : "186,0",
+        "cursorPosition" : "273,55",
         "ignored_words" : "Wellbeing\n",
-        "scrollLine" : "184"
+        "scrollLine" : "253"
     },
     "relative_order" : 1,
     "source_on_save" : false,

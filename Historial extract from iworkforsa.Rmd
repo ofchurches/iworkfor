@@ -49,15 +49,7 @@ advertiments <- path %>%
 Data read in from `xlsx` files often has bits of extra information above *and* below the actual "data". To check that we haven't accidentally imported that we can have a look at the top and bottom of our data set.
 
 ```{r}
-advertiments %>%
-  slice_head(n = 3) %>%
-  kable() %>%
-  kable_styling()
-
-advertiments %>%
-  slice_tail(n = 3) %>%
-  kable() %>%
-  kable_styling()
+datatable(advertiments)
 ```
 
 It looks like we've imported some extra rows that we don't want because they were footer details and some `NA` whole rows. We can remove them.
@@ -128,10 +120,12 @@ We can do this by including words and word-parts that signify the sort of job we
 
 Regardless, we can set the definition and accept these caveats. Importantly, because the new variable `Defined as a data job` is based on `Position ID Job Title`, there will be no missing values in this new variable. Its worth noting that this step can (and should) be changed as we think more or less terms are applicable.
 
+Its worth noting that there is a variable called `I Workfor SA Job Category` that is fairly complete. Because its not actually complete, its not suitable for basing our definition on. But its useful for a source of inspiration!
+
 Data jobs will be defined as such:
 
 ```{r}
-data_job_definitions <- c("data", "analy", "information", "intelligence", "statistic", "scient")
+data_job_definitions <- c("data", "analy", "information", "intelligence", "statistic", "scient", "research")
 ```
 
 Then we can append this definition to the data frame:
@@ -160,7 +154,9 @@ data_job_type <- advertiments_defined %>%
   mutate(`Is "statistic"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
                                          data_job_definitions[5]), 1, 0)) %>%
   mutate(`Is "scient"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`),
-                                         data_job_definitions[6]), 1, 0))
+                                         data_job_definitions[6]), 1, 0)) %>%
+  mutate(`Is "research"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`),
+                                         data_job_definitions[7]), 1, 0))
 
 data_job_type %>%
   select(-`Position ID Job Title`) %>%
@@ -180,7 +176,7 @@ This seems pretty sensible. Lets also check how they join together within a sing
 data_job_type %>%
   select(-`Position ID Job Title`) %>%
   filter_all(any_vars(. == 1)) %>%
-  upset(colnames(data_job_type[2:7]))
+  upset(colnames(data_job_type[2:8]))
 ```
 
 So there were 5 "data scientists". Seems pretty sensible.
@@ -275,3 +271,4 @@ It is worth noting that there are mustiple explanations for the differences in t
 * Some divisions may have recruited more "data" people in an earlier time period
 * Some divisions may not be hiring as many "data" people as they think they are
 
+### What sort of work are they being anticipated to do?
