@@ -1,3 +1,4 @@
 "0","increasing_data %>%"
+"0","  filter(`Defined as a data job` == ""Data"") %>%"
 "0","  kable() %>%"
 "0","  kable_styling()"
