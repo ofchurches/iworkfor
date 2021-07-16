@@ -1,0 +1,3 @@
+"0","advertiments_title <- advertiments_defined %>%"
+"0","  mutate(""Position ID check"" = str_extract(`Position ID Job Title`, `Position ID`)) %>%"
+"0","  mutate(""Job title"" = str_remove(`Position ID Job Title`, paste0(`Position ID`, "" - "")))"

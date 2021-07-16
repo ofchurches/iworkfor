@@ -1,0 +1,418 @@
+---
+title: "Historical extract from iworkforsa - lab book"
+author: "ofchurches"
+date: "28 June 2021"
+output: html_document
+---
+
+# Background
+This markdown is a preliminary investigation of the data provided by the [Office of the Commissioner for Public Sector Employment](https://www.publicsector.sa.gov.au/).The data contains details from every advertisement on [iworkforsa.gov.au](https://iworkfor.sa.gov.au/).
+
+Note that these data have been classified as "Public" by the OCPSE.
+
+## Packages
+
+```{r warning=FALSE, message=FALSE}
+library(readxl)
+library(tidyverse)
+library(here)
+library(lubridate)
+library(kableExtra)
+library(naniar)
+library(patchwork)
+library(skimr)
+library(DT)
+library(ComplexUpset)
+library(tidytext)
+library(tidyr)
+library(stringr)
+library(scales)
+library(widyr)
+library(tidygraph)
+library(ggraph)
+```
+
+## Import, arrange and format
+
+```{r warning=FALSE, message=FALSE}
+path <- here("IWORK4SA Data 2017-2021, Classification-Public.xlsx")
+
+advertiments <- path %>% 
+  excel_sheets() %>%
+  map_dfr(
+    function(sheet) {
+      temp = read_excel(sheet, path = path, skip = 8)
+      mutate(temp, Year = sheet)
+    }
+  )
+
+```
+
+
+## Checks and balances
+
+### Check the top and bottom of the data
+
+Data read in from `xlsx` files often has bits of extra information above *and* below the actual "data". To check that we haven't accidentally imported that we can have a look at the top and bottom of our data set.
+
+```{r}
+datatable(advertiments)
+```
+
+It looks like we've imported some extra rows that we don't want because they were footer details and some `NA` whole rows. We can remove them.
+
+```{r}
+advertiments_clean <- advertiments%>%
+  filter(str_detect(`Date Publish To Public Drill`, "Report created") == FALSE | is.na(`Date Publish To Public Drill`) == TRUE) %>%
+  filter(is.na(`Position ID Job Title`) == FALSE)
+```
+
+Just to check this again...we imported five sheets from the `xlsx` file so `advertiments_clean` should now have five less rows than `advertisments`. And, the difference in rows is: `r nrow(advertiments) - nrow(advertiments_clean)`!
+
+### Change format
+
+Let's put the variables in a format that we can treat appropriately.
+
+```{r}
+advertiments_formatted <- advertiments_clean %>% 
+  mutate(`Date Publish To Public Drill` = ymd(`Date Publish To Public Drill`)) %>%
+  mutate(`I Workfor SA Min Salary` = as.numeric(`I Workfor SA Min Salary`)) %>%
+  mutate(`I Workfor SA Max Salary` = as.numeric(`I Workfor SA Max Salary`))
+```
+
+### What are we working with
+It would be good to have a look at the data types in each variable to work out if its suitable for what we'll want to do in the analysis.
+
+```{r}
+advertiments_formatted %>%
+  skim()
+```
+The completeness of `Position ID Job Title` looks really promising and the completeness of `I Workfor SA Min Salary` and `I Workfor SA Max Salary` is hopeful too.
+
+### Missing data
+
+```{r, fig.align="center"}
+advertiments_formatted %>%
+  gg_miss_var(show_pct = TRUE, facet = Year) +
+  labs(title = str_wrap("Percent of missing data for each variable in `advertisments`", width = 50))
+```
+
+It seems that all the variables except `I Workfor SA Part Time Hours` have minimal missing values and none of this changes much over time.
+
+```{r, fig.align="center"}
+gg_miss_upset(advertiments_formatted)
+```
+
+Its reassuring that `I Workfor SA Min Salary` and `I Workfor SA MAX Salary` are only missing in combination with each other (and sometimes with `I Workfor SA Part Time Hours` as well).
+
+The only note that appears particularly pertinent from these analyses is that `I Workfor SA Part Time Hours` should be treated with caution. We should note that the variables: `Division`, `Position Status`, `Position ID`, `Position ID Job Title`, `I Workfor SA Part Time` and `Year` are all complete with no missing values.
+
+# Analyses
+
+## "Data" jobs
+
+The motivation for getting these data was to look at advertisements for "data" jobs to investigate questions such as:
+
+* Are they increasing as a proportion of the advertisements?
+* What departments are recruiting them?
+* What sort of work are they being anticipated to do?
+
+### Definition and caveats
+
+To answer this question we need a definition of "data" jobs.
+
+We can do this by including words and word-parts that signify the sort of job we are interested in. It is worth stating up front that this is necessarily a decision process rather than a data process. That is, the jobs we end up with classified as "data" and "not data" will be so classified because of our subjective *decision* not because of some objective *data*. In addition, this has a signal detection characteristic in that there will be errors due both to some "not data" jobs which end up classified as "data jobs" and some "data jobs" that end up classified as "not data jobs".
+
+### Definition
+
+Regardless, we can set the definition and accept these caveats. Importantly, because the new variable `Defined as a data job` is based on `Position ID Job Title`, there will be no missing values in this new variable. Its worth noting that this step can (and should) be changed as we think more or less terms are applicable.
+
+Its worth noting that there is a variable called `I Workfor SA Job Category` that is fairly complete. However, because its not actually complete, its not suitable for basing our definition on.
+
+Data jobs will be defined as `Position ID Job Title` that contain:
+
+```{r}
+data_job_definitions <- c("data", "analy", "information", "intelligence", "statistic", "scien", "research", "tech")
+```
+
+Then we can append this definition to the data frame:
+
+```{r}
+advertiments_defined <- advertiments_formatted %>% 
+  mutate(`Position ID Job Title` = str_to_lower(`Position ID Job Title`)) %>%
+  mutate(`Defined as a data job` = ifelse(str_detect(`Position ID Job Title`, 
+                                                     paste(data_job_definitions, collapse = "|")
+                                                     ), 
+         "Data", "Not data"))
+```
+
+As a check on our definitions, we should see how often each occur.
+
+```{r}
+data_job_type <- advertiments_defined %>%
+  select(`Position ID Job Title`) %>%
+  mutate(`Is "data"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[1]), 1, 0)) %>%
+  mutate(`Is "analy"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[2]), 1, 0)) %>%
+  mutate(`Is "information"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[3]), 1, 0)) %>%
+  mutate(`Is "intelligence"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[4]), 1, 0)) %>%
+  mutate(`Is "statistic"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), 
+                                         data_job_definitions[5]), 1, 0)) %>%
+  mutate(`Is "scien"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`),
+                                         data_job_definitions[6]), 1, 0)) %>%
+  mutate(`Is "research"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`),
+                                         data_job_definitions[7]), 1, 0)) %>%
+    mutate(`Is "tech"` = ifelse(str_detect(str_to_lower(`Position ID Job Title`),
+                                         data_job_definitions[8]), 1, 0)) 
+
+data_job_type %>%
+  select(-`Position ID Job Title`) %>%
+  pivot_longer(cols = everything(), names_to = "Data job type", values_to = "Count") %>%
+  group_by(`Data job type`) %>%
+  summarise(Count = sum(Count)) %>%
+  ggplot(aes(x = reorder(`Data job type`, -Count), y = Count, fill = `Data job type`)) + 
+  geom_col() + 
+  theme(legend.position = "none") + 
+  labs(x = "Data job type", title = "Counts of data job types")
+  
+```
+
+This seems pretty plausible. Lets also check how they join together within a single `Position ID Job Title`.
+
+```{r}
+data_job_type %>%
+  select(-`Position ID Job Title`) %>%
+  filter_all(any_vars(. == 1)) %>%
+  upset(colnames(data_job_type[2:9]))
+```
+
+So there were 5 "data scientists". Seems pretty plausible
+
+Before we move onto the answers to our questions, lets just have a look at the most frequent "Data" and "Not data" jobs.
+
+```{r}
+advertiments_title <- advertiments_defined %>%
+  mutate("Position ID check" = str_extract(`Position ID Job Title`, `Position ID`)) %>%
+  mutate("Job title" = str_remove(`Position ID Job Title`, paste0(`Position ID`, " - ")))
+```
+
+Did we extract the `Position ID` correctly? Yes!
+
+So lets remove the `Position ID` from the `Position ID Job Title` to get the `JOb Title`.
+
+```{r}
+advertiments_title %>%
+  group_by(`Defined as a data job`) %>%
+  count(`Job title`) %>%
+  top_n(15) %>%
+  ungroup() %>%
+  mutate(`Defined as a data job` = as.factor(`Defined as a data job`),
+         `Job title` = reorder_within(`Job title`, n, `Defined as a data job`)) %>%
+  ggplot(aes(`Job title`, n, fill = `Defined as a data job`)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~`Defined as a data job`, scales = "free") +
+  coord_flip() +
+  scale_x_reordered() +
+  scale_y_continuous(expand = c(0,0)) +
+  labs(y = "Count of times 'Job title' was advertised",
+       x = NULL,
+       title = "Most common job titles by category")
+```
+
+This raises some serious side questions such as:
+
+* what does a "iworkfoesa template" do for a job?
+* There are a bunch of roles with the first word of "Senior". I wonder if there are comparable `Job title` without that prefix?
+
+## Answers
+
+### Are "data jobs" increasing as a proportion of the advertisments?
+
+
+```{r, fig.align="center"}
+increasing_data <- advertiments_title %>%
+  group_by(`Defined as a data job`, Year) %>%
+  count(name = "Number of advertisments") %>%
+  group_by(Year) %>%
+  mutate(`Proportion within each year`= `Number of advertisments`/sum(`Number of advertisments`))
+
+count_plot <- increasing_data %>%
+  ggplot(aes(x = Year, y = `Number of advertisments`, colour = `Defined as a data job`, group = `Defined as a data job`)) + 
+  geom_line() + 
+  scale_y_log10() + 
+  labs(title = "Count of jobs on iworkforsa that  each year by definition")
+
+prop_plot <- increasing_data %>%
+  ggplot(aes(x = Year, y = `Proportion within each year`, colour = `Defined as a data job`, group = `Defined as a data job`)) + 
+  geom_line() + 
+  scale_y_log10() + 
+  labs(title = "Proportion of jobs on iworkforsa each year by definition")
+
+count_plot/prop_plot
+
+increasing_data %>%
+  filter(`Defined as a data job` == "Data") %>%
+  kable() %>%
+  kable_styling()
+```
+
+This certainly doesn't make it look as though there has been an *explosion* in the proportion of "data" jobs advertised over the last four years. There were `r increasing_data[[4, 3]] - increasing_data[[2,3]]` more "data" jobs in 2020 than in 2018. While this is a `r (increasing_data[[2,3]]/increasing_data[[4, 3]])*100` percent increase in the number of these jobs that were advertised, it is worth noting that this is only an increase from a percent of `r increasing_data[[2,4]] * 100` in 2018 to  `r increasing_data[[4, 4]] * 100` in 2020 of the overall number of jobs that were advertised. That is an increase in just `r (increasing_data[[4, 4]] - increasing_data[[2,4]]) * 100` percent.
+
+### What departments are recruiting them?
+
+```{r, fig.align="center"}
+departments_data <- advertiments_title %>%
+  group_by(Division, `Defined as a data job`) %>%
+  count(name = "Number of advertisments in division") %>%
+  ungroup() %>%
+  complete(Division, `Defined as a data job`, fill = list(`Number of advertisments in division` = 0)) %>%
+  group_by(Division) %>%
+  mutate("Division total" = sum(`Number of advertisments in division`)) %>%
+  ungroup() %>%
+  mutate("Percent" = (`Number of advertisments in division`/`Division total`)*100)
+
+most_data_departments <- departments_data %>%
+  filter(`Defined as a data job` == "Data") %>%
+  slice_max(order_by = Percent, n = 12) %>%
+  pull(Division)
+
+departments_data  %>%
+  filter(Division %in% most_data_departments) %>%
+  mutate(Division = factor(Division, levels = most_data_departments, ordered = TRUE)) %>%
+  ggplot(aes(x = Division, 
+             y = Percent, 
+             fill = `Defined as a data job`)) + 
+  geom_col(position = "dodge") + 
+  labs(title = "Divisions with the greatest proportion of 'data' job advertiments", 
+       x = "") + 
+  scale_x_discrete(limits=rev) +
+  coord_flip()
+
+```
+
+A more comprehensive investigation of these data can be made in the table below:
+
+```{r}
+datatable(departments_data)
+```
+
+```{r, echo=FALSE}
+dhw_count <- departments_data %>% 
+  filter(Division == "Department for Health and Wellbeing") %>% 
+  filter(`Defined as a data job` == "Data") %>% pull(`Number of advertisments in division`)
+
+dhw_percent <- departments_data %>% 
+  filter(Division == "Department for Health and Wellbeing") %>% 
+  filter(`Defined as a data job` == "Data") %>% 
+  pull(Percent)
+```
+
+
+So, the Department of Health and Wellbeing has the greatest *number* of "data" job advertisements: `r dhw_count`. But, it also has one of the smallest *proportions* of data job advertisements: `r dhw_percent`%.
+
+It is worth noting that there are multiple explanations for the differences in the number of advertisements of "data" jobs between the Divisions.
+* Divisions that "data" people like working in may keep their staff for longer and so advertise less
+* Some divisions may have recruited more "data" people in an earlier time period
+* Some divisions may not be hiring as many "data" people as they think they are
+
+### What sort of work are they being anticipated to do?
+
+Using the `Position ID Job Title`, we can see what other words appear alongside those used to define `Defined as a data job`.
+
+Lets start by looking at the words most frequently occurring in those jobs that we classified as `Defined as a data job == "Data"`.
+
+```{r}
+advertiments_unnest <- advertiments_title %>%
+  #select(`Defined as a data job`, `Job title`) %>%
+  unnest_tokens(Word, `Job title`)
+
+advertiments_unnest %>%
+  filter(`Defined as a data job` == "Data") %>%
+  count(Word, name = "Number of occurances") %>%
+  slice_max(order_by = `Number of occurances`, n = 12) %>%
+  ggplot(aes(x = reorder(Word, `Number of occurances`), y = `Number of occurances`, fill = Word)) +
+  geom_col() + 
+  coord_flip()  + 
+  theme(legend.position = "none") + 
+  labs(x = "", title = "Most used words used in 'data' job advertisments")
+  
+```
+
+It would be more instructive to see the words that most *differentiate* between "Data" and "Not data" jobs:
+
+```{r}
+advertisments_frequency <- advertiments_unnest %>% 
+  group_by(`Defined as a data job`) %>% 
+  count(Word, sort = TRUE) %>% 
+  left_join(advertiments_unnest %>% 
+              group_by(`Defined as a data job`) %>% 
+              summarise(total = n())) %>%
+  mutate(Frequency = n/total) %>% 
+  select(`Defined as a data job`, Word, Frequency) %>% 
+  pivot_wider(names_from = `Defined as a data job`, values_from = Frequency) %>%
+  arrange(Data, `Not data`)
+
+ggplot(advertisments_frequency, aes(Data, `Not data`)) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.25, height = 0.25) +
+  geom_text(aes(label = Word), check_overlap = TRUE, vjust = 1.5) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  geom_abline(color = "red")
+```
+
+Words near the red line are used with similar frequencies in the `Position ID Job Title` of "Data" and "Not data" jobs. Words further from the red line are used disproportionately in one set of `Position ID Job Title`. Hence, "programmer" is used predominantly in "Data" jobs while "social" is used predominantly in "Not data" jobs.
+
+We could also look at the log-odds ratios between the categories:
+
+```{r}
+word_ratios <- advertiments_unnest %>%
+  count(Word, `Defined as a data job`) %>%
+  group_by(Word) %>%
+  filter(sum(n) >= 10) %>%
+  ungroup() %>%
+  pivot_wider(names_from = `Defined as a data job`, values_from = n, values_fill = 0) %>%
+  mutate_if(is.numeric, list(~(. + 1) / (sum(.) + 1))) %>%
+  mutate(logratio = log(`Data` / `Not data`)) %>%
+  arrange(desc(logratio))
+
+word_ratios %>%
+  group_by(logratio < 0) %>%
+  slice_max(abs(logratio), n = 15) %>% 
+  ungroup() %>%
+  mutate(word = reorder(Word, logratio)) %>%
+  ggplot(aes(word, logratio, fill = logratio < 0)) +
+  geom_col() +
+  coord_flip() +
+  ylab("log odds ratio (David/Julia)") +
+  scale_fill_discrete(name = "", labels = c("Data", "Not dat"))
+```
+
+So, a lot of the words that are found have the actual stem we included in the definition of "Data" jobs in the first place. But removing them would remove both "technical" and "technician" and its interesting to note that both are present.
+
+Finally, it might be instructive to see which words are used together in the "Data" job advertisements.
+
+```{r}
+advertiments_unnest %>% 
+  filter(`Defined as a data job` == "Data") %>%
+  select(Word, `Position ID Job Title`) %>%
+  rename(Title = `Position ID Job Title`) %>%
+  pairwise_count(Word, Title, sort = TRUE, upper = FALSE) %>%
+  filter(n >= 15) %>%
+  as_tbl_graph() %>%
+  to_undirected %>%
+  activate(nodes) %>%
+  mutate(degree = centrality_degree() / local_ave_degree()) %>%
+  mutate(community = as.factor(group_fast_greedy())) %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n)) +
+  geom_node_point(aes(size = degree, colour = community)) +
+  geom_node_text(aes(label = name), repel = TRUE, 
+                 point.padding = unit(0.2, "lines")) +
+  theme_void() + 
+  theme(legend.position = "none")
+```
+
+It appears that there are some meaningful clusters. Within the connected component, the two biggest clusters seem associated with roles that might be related to "business intelligence" and "freedom of information". Its worth noting that "data" itself is quite central to the network overall.

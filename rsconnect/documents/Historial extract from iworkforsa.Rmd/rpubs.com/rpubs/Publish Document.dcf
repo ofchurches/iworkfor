@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/790073/19f5d4787ead49d594181f49174b6fcc
+bundleId: https://api.rpubs.com/api/v1/document/790073/19f5d4787ead49d594181f49174b6fcc
+url: http://rpubs.com/ofchurches/790073
+when: 1626054532.94384

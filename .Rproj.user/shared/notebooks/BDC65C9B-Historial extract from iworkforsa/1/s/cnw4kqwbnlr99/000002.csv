@@ -1,0 +1,7 @@
+"0","dhw_count <- departments_data %>% "
+"0","  filter(Division == ""Department for Health and Wellbeing"") %>% "
+"0","  filter(`Defined as a data job` == ""Data"") %>% pull(`Number of advertisments in division`)"
+"0","dhw_percent <- departments_data %>% "
+"0","  filter(Division == ""Department for Health and Wellbeing"") %>% "
+"0","  filter(`Defined as a data job` == ""Data"") %>% "
+"0","  pull(Percent)"

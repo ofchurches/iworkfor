@@ -1,0 +1,6 @@
+"0","advertiments_formatted <- advertiments_clean %>% "
+"0","  mutate(`Date Publish To Public Drill` = ymd(`Date Publish To Public Drill`)) %>%"
+"0","  mutate(`I Workfor SA Min Salary` = as.numeric(`I Workfor SA Min Salary`)) %>%"
+"0","  mutate(`I Workfor SA Max Salary` = as.numeric(`I Workfor SA Max Salary`))"
+"2","NAs introduced by coercion"
+"2","NAs introduced by coercion"

@@ -1,0 +1,3 @@
+"0","advertiments_clean <- advertiments%>%"
+"0","  filter(str_detect(`Date Publish To Public Drill`, ""Report created"") == FALSE | is.na(`Date Publish To Public Drill`) == TRUE) %>%"
+"0","  filter(is.na(`Position ID Job Title`) == FALSE)"
