@@ -1,0 +1,4 @@
+"0","advertiments %>%"
+"0","  slice_tail(n = 6) %>%"
+"0","  kable() %>%"
+"0","  kable_styling()"

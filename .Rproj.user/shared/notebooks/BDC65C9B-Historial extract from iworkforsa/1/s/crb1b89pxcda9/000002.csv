@@ -1,5 +1,0 @@
-"0","advertiments_defined <- advertiments_formatted %>% "
-"0","  mutate(`Defined as a data job` = ifelse(str_detect(str_to_lower(`Position ID Job Title`), "
-"0","                                                     paste(data_job_definitions, collapse = ""|"")"
-"0","                                                     ), "
-"0","         ""Data"", ""Not data""))"

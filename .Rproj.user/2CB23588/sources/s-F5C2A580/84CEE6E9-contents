@@ -56,15 +56,7 @@ advertiments <- path %>%
 Data read in from `xlsx` files often has bits of extra information above *and* below the actual "data". To check that we haven't accidentally imported that we can have a look at the top and bottom of our data set.
 
 ```{r}
-advertiments %>%
-  slice_head(n = 6) %>%
-  kable() %>%
-  kable_styling()
-
-advertiments %>%
-  slice_tail(n = 6) %>%
-  kable() %>%
-  kable_styling()
+datatable(advertiments)
 ```
 
 It looks like we've imported some extra rows that we don't want because they were footer details and some `NA` whole rows. We can remove them.
@@ -81,7 +73,7 @@ Just to check this again...we imported five sheets from the `xlsx` file so `adve
 
 Let's put the variables in a format that we can treat appropriately.
 
-```{r, warning=FALSE, message=FALSE}
+```{r}
 advertiments_formatted <- advertiments_clean %>% 
   mutate(`Date Publish To Public Drill` = ymd(`Date Publish To Public Drill`)) %>%
   mutate(`I Workfor SA Min Salary` = as.numeric(`I Workfor SA Min Salary`)) %>%
@@ -95,7 +87,6 @@ It would be good to have a look at the data types in each variable to work out i
 advertiments_formatted %>%
   skim()
 ```
-
 The completeness of `Position ID Job Title` looks really promising and the completeness of `I Workfor SA Min Salary` and `I Workfor SA Max Salary` is hopeful too.
 
 ### Missing data
@@ -112,7 +103,7 @@ It seems that all the variables except `I Workfor SA Part Time Hours` have minim
 gg_miss_upset(advertiments_formatted)
 ```
 
-It's reassuring that `I Workfor SA Min Salary` and `I Workfor SA MAX Salary` are only missing in combination with each other (and sometimes with `I Workfor SA Part Time Hours` as well).
+Its reassuring that `I Workfor SA Min Salary` and `I Workfor SA MAX Salary` are only missing in combination with each other (and sometimes with `I Workfor SA Part Time Hours` as well).
 
 The only note that appears particularly pertinent from these analyses is that `I Workfor SA Part Time Hours` should be treated with caution. We should note that the variables: `Division`, `Position Status`, `Position ID`, `Position ID Job Title`, `I Workfor SA Part Time` and `Year` are all complete with no missing values.
 
@@ -320,7 +311,7 @@ dhw_percent <- departments_data %>%
 ```
 
 
-So, the Department of Health and Wellbeing has the greatest *number* of "data" job advertisements: `r dhw_count`. But, it also has one of the smallest *percentages* of data job advertisements: `r dhw_percent`%.
+So, the Department of Health and Wellbeing has the greatest *number* of "data" job advertisements: `r dhw_count`. But, it also has one of the smallest *proportions* of data job advertisements: `r dhw_percent`%.
 
 It is worth noting that there are multiple explanations for the differences in the number of advertisements of "data" jobs between the Divisions.
 * Divisions that "data" people like working in may keep their staff for longer and so advertise less
@@ -352,7 +343,7 @@ advertiments_unnest %>%
 
 It would be more instructive to see the words that most *differentiate* between "Data" and "Not data" jobs:
 
-```{r, warning=FALSE, message=FALSE}
+```{r}
 advertisments_frequency <- advertiments_unnest %>% 
   group_by(`Defined as a data job`) %>% 
   count(Word, sort = TRUE) %>% 
@@ -403,7 +394,7 @@ So, a lot of the words that are found have the actual stem we included in the de
 
 Finally, it might be instructive to see which words are used together in the "Data" job advertisements.
 
-```{r, warning=FALSE, message=FALSE}
+```{r}
 advertiments_unnest %>% 
   filter(`Defined as a data job` == "Data") %>%
   select(Word, `Position ID Job Title`) %>%
